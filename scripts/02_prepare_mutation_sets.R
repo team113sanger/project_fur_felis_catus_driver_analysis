@@ -45,7 +45,7 @@ run_dndscv <- function(cohort_file, target_genes, suffix) {
 
   dndsout <- dndscv(mutations,
     gene_list = target_genes,
-    refdb = here("feline_transcript_104_dset.rda"), cv = NULL
+    refdb = here("feline_transcript_104_canon_dset.rda"), cv = NULL
   )
   dndsout
 

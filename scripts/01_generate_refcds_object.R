@@ -8,6 +8,9 @@ library(readxl)
 library(readr)
 library(stringr)
 
+# List available datasets to find your species of interest
+
+
 path_genome_fasta <- "/lustre/scratch124/casm/team78pipelines/reference/Cat/Felis_catus_9.0/genome.fa"
 
 prim_contigs <- c(
@@ -16,10 +19,22 @@ prim_contigs <- c(
   "E2", "E3", "F1", "F2", "X"
 )
 
+all_genes <- read_tsv(here("felis_catus_104_ biomart.txt"))
+canonical_transcripts <- read_tsv(here("feline_104_canonical_transcripts.tsv"), 
+                            col_names =c("Symbol", "Gene", "Transcript", "Transcript Stable ID"))
+dim(all_genes)
+canonical_genes <- all_genes |> 
+filter(`Transcript stable ID version` %in% canonical_transcripts[["Transcript Stable ID"]]) |>
+select(-`Transcript stable ID version`)
+
+
+write_tsv(canonical_genes, "felis_catus_104_canonical_refcds_inputs.txt")
+
+
 buildref(
-  cdsfile = here("felis_catus_104.txt"),
+  cdsfile = here("felis_catus_104_canonical_refcds_inputs.txt"),
   genomefile = path_genome_fasta,
   onlychrs = prim_contigs,
   useids = TRUE,
-  outfile = "feline_transcript_104_dset.rda"
+  outfile = "feline_transcript_104_canon_dset.rda"
 )
