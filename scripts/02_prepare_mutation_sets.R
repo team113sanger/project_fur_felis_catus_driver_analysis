@@ -8,7 +8,9 @@ library(readxl)
 library(stringr)
 library(purrr)
 
-cohort_mafs <- fs::dir_ls("/lustre/scratch125/casm/team113da/projects/FUR/FUR_analysis/FUR_analysis_cat/phased_mafs/outputs", glob = "**baitset_only.whole_cohort.keep.maf")
+# keepPA_vaf_size_filt_(matched)_caveman_pindel_onePerPatient.MAF
+cohort_mafs <- fs::dir_ls("/lustre/scratch125/casm/team113da/projects/FUR/FUR_analysis/FUR_analysis_cat/fur_cat_maf/analysis", 
+                          recurse = TRUE, regexp = "keep_vaf_size_filt_matched.*[0-9]+.maf$")
 names(cohort_mafs) <- str_extract(cohort_mafs, pattern = "([0-9]+_[0-9]+)")
 
 
@@ -37,10 +39,14 @@ run_dndscv <- function(cohort_file, target_genes, suffix) {
   test <- read_tsv(cohort_file)
 
   mutations <- test |>
-    filter(!(Variant_Type %in% c("DNP", "TNP", "ONP"))) %>%
-    select(Tumor_Sample_Barcode, Chromosome, POS_VCF, REF_VEP, ALT_VEP) %>%
-    rename(sampleID = Tumor_Sample_Barcode, chr = Chromosome, pos = POS_VCF, ref = REF_VEP, mut = ALT_VEP) %>%
-    mutate(chr = str_replace(chr, "chr", "")) %>%
+    filter(
+    !(Variant_Type %in% c("INS", "DEL")) |  
+      (VAF_tum >= 0.1 & Variant_Type %in% c("INS", "DEL")) # Filter out likely indel artefacts
+  ) |>
+  filter(`99_Lives` == "-") |>
+    select(Tumor_Sample_Barcode, Chromosome, POS_VCF, REF_VEP, ALT_VEP) |>
+    rename(sampleID = Tumor_Sample_Barcode, chr = Chromosome, pos = POS_VCF, ref = REF_VEP, mut = ALT_VEP) |>
+    mutate(chr = str_replace(chr, "chr", "")) |>
     distinct()
 
   dndsout <- dndscv(mutations,
@@ -66,22 +72,28 @@ run_dndscv <- function(cohort_file, target_genes, suffix) {
 
   print("Theta")
   print(dndsout$nbreg$theta)
-  return(sel_cv)
+
+  sel_out <- sel_cv |> mutate(theta = dndsout$nbreg$theta)
+  return(sel_out)
 }
 
 
 filtered_gene_list <- setdiff(gene_list, missing_genes)
-sig_genes_per_cohort <- imap_dfr(cohort_mafs, ~ run_dndscv(.x, filtered_gene_list, .y), .id = "cohort")
+sig_genes_per_cohort <- imap_dfr(cohort_mafs, ~run_dndscv(.x, filtered_gene_list, .y), .id = "cohort")
+
 
 sig_genes_per_cohort |>
   tibble() |>
-  filter(qallsubs_cv < 0.05) |>
+  filter(qglobal_cv < 0.05) |>
   group_by(cohort) |>
+  select(cohort, gene_name, qglobal_cv, theta) |>
   group_split()
 
 
 knitr::kable(sig_genes_per_cohort |> tibble() |>
-  filter(qallsubs_cv < 0.05) |>
-  select(cohort, gene_name, qallsubs_cv) |>
-  arrange(qallsubs_cv) |>
+  filter(qglobal_cv < 0.05) |>
+  select(cohort, gene_name, qglobal_cv, theta) |>
+  arrange(qglobal_cv) |>
   print(n = 100))
+
+
