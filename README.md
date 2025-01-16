@@ -8,12 +8,10 @@ In brief, this process involved:
 - 3) Reformating + filtering the input MAF files and then running the variants within them through dNdScv
 ```
 .
-├── feline_104_canonical_transcripts.tsv
-├── feline_transcript_104_canon_dset.rda
-├── felis_catus_104_biomart.txt
-├── felis_catus_104_canonical_refcds_inputs.txt
-├── FUR_BAITSET_GENES.xlsx
+.
 ├── metadata
+│   ├── felis_catus_104_biomart.txt
+│   └── FUR_BAITSET_GENES.xlsx
 ├── README.md
 ├── renv
 │   ├── activate.R
@@ -22,19 +20,8 @@ In brief, this process involved:
 │   └── staging
 ├── renv.lock
 ├── results
-│   ├── dndscv_genes_6555_2711.tsv
-│   ├── dndscv_genes_6711_2820.tsv
-│   ├── dndscv_genes_6712_2822.tsv
-│   ├── dndscv_genes_6713_2821.tsv
-│   ├── dndscv_genes_6841_2964.tsv
-│   ├── dndscv_genes_6864_2965.tsv
-│   ├── dndscv_genes_6945_3142.tsv
-│   ├── dndscv_genes_6973_2987.tsv
-│   ├── dndscv_genes_6982_3135.tsv
-│   ├── dndscv_genes_6990_3065.tsv
-│   ├── dndscv_genes_7040_3064.tsv
-│   ├── dndscv_genes_7097_3073.tsv
-│   └── dndscv_genes_7098_3140.tsv
+│   ├── dndscv
+│   └── inputs
 └── scripts
     ├── 01_fetch104_canonical_transcripts.sh
     ├── 01_generate_refcds_object.R
