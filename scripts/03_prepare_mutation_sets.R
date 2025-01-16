@@ -52,7 +52,7 @@ run_dndscv <- function(cohort_file, target_genes, suffix) {
 
   dndsout <- dndscv(mutations,
     gene_list = target_genes,
-    refdb = here("feline_transcript_104_canon_dset.rda"), cv = NULL
+    refdb = here("results/inputs/feline_transcript_104_canon_dset.rda"), cv = NULL
   )
   dndsout
 
@@ -61,7 +61,7 @@ run_dndscv <- function(cohort_file, target_genes, suffix) {
   print(head(sel_cv, 20), digits = 3)
   tibble(sel_cv) |>
     select(gene_name, contains("q"))
-  write.table(sel_cv, file = paste0("results/dndscv_genes_", suffix, ".tsv"), quote = F, sep = "\t", row.names = F)
+  write.table(sel_cv, file = paste0("results/dndscv/dndscv_genes_", suffix, ".tsv"), quote = F, sep = "\t", row.names = F)
 
 
 
