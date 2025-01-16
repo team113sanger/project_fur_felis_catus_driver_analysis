@@ -30,7 +30,7 @@ Then, any variants detected in the "99 Lives" set (likely germline variants) wer
 │   └── inputs
 └── scripts
     ├── 01_fetch104_canonical_transcripts.sh
-    ├── 01_generate_refcds_object.R
-    ├── 02_prepare_mutation_sets.R
+    ├── 02_generate_refcds_object.R
+    ├── 03_prepare_mutation_sets.R
     └── get_canonical_transcripts.pl
 ```
