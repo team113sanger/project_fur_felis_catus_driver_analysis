@@ -1,13 +1,19 @@
 # FUR Cat Driver analysis 
+## Summary
+Significantly mutated genes within each FUR-CAT cohort were identified using dNdScv. 
 
-Significantly mutated genes within each FUR cohort were identified using dNdscv. To do so, the studies "Keep" variants - those passing QC filtering steps in the FUR project were subject to two filtering steps.First indels with VAF < 0.1 were removed from the cohort MAF files to reduce the impact of possible  FFPE artefacts in dNdSCv analysis. Then, any variants with matches to the 99 Lives set were removed to remove likely Germline variants from the cohort MAFs. 
+To perform dNdScv analysis:
+- 1) The Ensembl v104 canonical transcript for each gene in the FUR cat baitset was obtained (`scripts/01_fetch104_canonical_transcripts.sh`)
+- 2) A dNdScv reference database was created using the FelCat9 genome and the FelCat 104 canonical transcripts (`scripts/01_fetch104_canonical_transcripts.sh`)
+- 3) The cohort MAF files were filtered and reformatted to input into dNdScv (`scripts/03_prepare_mutation_sets.R`)
 
-In brief, this process involved:
-- 1) Obtaining the canonical transcript for each of the genes included within the FUR cat baiset.
-- 2) Generating a reference db from the FelCat9 genome and the canonical transcripts.
-- 3) Reformating + filtering the input MAF files and then running the variants within them through dNdScv
+Each cohort's "Keep" variants - those passing the QC filtering steps for the FUR Cat project – were subject to two filters.
+First, indels with VAF < 0.1 were removed from the cohort MAF files to reduce the impact of possible FFPE artefacts. 
+Then, any variants detected in the "99 Lives" set (likely germline variants) were removed from the analysis.
+
+
+## Project organistion
 ```
-.
 .
 ├── metadata
 │   ├── felis_catus_104_biomart.txt
