@@ -9,8 +9,8 @@ library(stringr)
 library(purrr)
 
 # keepPA_vaf_size_filt_(matched)_caveman_pindel_onePerPatient.MAF
-cohort_mafs <- fs::dir_ls("/lustre/scratch125/casm/team113da/projects/FUR/FUR_analysis/FUR_analysis_cat/fur_cat_maf/analysis", 
-                          recurse = TRUE, regexp = "keep_vaf_size_filt_matched.*[0-9]+.maf$")
+cohort_mafs <- fs::dir_ls("/lustre/scratch125/casm/team113da/projects/FUR/FUR_analysis/FUR_analysis_cat/fur_hotspot_mutations/analysis/finalised_mafs", 
+                          recurse = TRUE, regexp = "keep_vaf_size_filt_matched.*[0-9]+.finalised.maf$")
 names(cohort_mafs) <- str_extract(cohort_mafs, pattern = "([0-9]+_[0-9]+)")
 
 
