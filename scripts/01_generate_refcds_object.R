@@ -19,22 +19,24 @@ prim_contigs <- c(
   "E2", "E3", "F1", "F2", "X"
 )
 
-all_genes <- read_tsv(here("felis_catus_104_ biomart.txt"))
-canonical_transcripts <- read_tsv(here("feline_104_canonical_transcripts.tsv"), 
-                            col_names =c("Symbol", "Gene", "Transcript", "Transcript Stable ID"))
-dim(all_genes)
-canonical_genes <- all_genes |> 
-filter(`Transcript stable ID version` %in% canonical_transcripts[["Transcript Stable ID"]]) |>
-select(-`Transcript stable ID version`)
+all_genes <- read_tsv(here("metadata/felis_catus_104_ biomart.txt"))
+canonical_transcripts <- read_tsv(
+  here("feline_104_canonical_transcripts.tsv"),
+  col_names = c("Symbol", "Gene", "Transcript", "Transcript Stable ID")
+)
+
+canonical_genes <- all_genes |>
+  filter(`Transcript stable ID version` %in% canonical_transcripts[["Transcript Stable ID"]]) |>
+  select(-`Transcript stable ID version`)
 
 
-write_tsv(canonical_genes, "felis_catus_104_canonical_refcds_inputs.txt")
+write_tsv(canonical_genes, here("results/inputs/felis_catus_104_canonical_refcds_inputs.txt"))
 
 
 buildref(
-  cdsfile = here("felis_catus_104_canonical_refcds_inputs.txt"),
+  cdsfile = here("results/inputs/felis_catus_104_canonical_refcds_inputs.txt"),
   genomefile = path_genome_fasta,
   onlychrs = prim_contigs,
   useids = TRUE,
-  outfile = "feline_transcript_104_canon_dset.rda"
+  outfile = here("results/inputs/feline_transcript_104_canon_dset.rda")
 )

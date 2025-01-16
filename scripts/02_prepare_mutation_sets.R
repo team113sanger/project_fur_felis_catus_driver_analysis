@@ -9,18 +9,19 @@ library(stringr)
 library(purrr)
 
 # keepPA_vaf_size_filt_(matched)_caveman_pindel_onePerPatient.MAF
-cohort_mafs <- fs::dir_ls("/lustre/scratch125/casm/team113da/projects/FUR/FUR_analysis/FUR_analysis_cat/fur_hotspot_mutations/analysis/finalised_mafs", 
-                          recurse = TRUE, regexp = "keep_vaf_size_filt_matched.*[0-9]+.finalised.maf$")
+cohort_mafs <- fs::dir_ls("/lustre/scratch125/casm/team113da/projects/FUR/FUR_analysis/FUR_analysis_cat/fur_hotspot_mutations/analysis/finalised_mafs",
+  recurse = TRUE, regexp = "keep_vaf_size_filt_matched.*[0-9]+.finalised.maf$"
+)
 names(cohort_mafs) <- str_extract(cohort_mafs, pattern = "([0-9]+_[0-9]+)")
 
 
-cat_baitset <- read_xlsx(here("FUR_BAITSET_GENES.xlsx"), sheet = 3)
+cat_baitset <- read_xlsx(here("metadata/FUR_BAITSET_GENES.xlsx"), sheet = 3)
 gene_list <- cat_baitset |>
   filter(Feline_Gene_Symbol != "-") |>
   mutate(id = paste0(Feline_Ensembl_ID, ":", Feline_Gene_Symbol)) |>
   pull(id)
 
-cat_baitset
+
 missing_genes <- c(
   "ENSFCAG00000011854:ALK", "ENSFCAG00000006946:CARS",
   "ENSFCAG00000005106:FGFR1OP", "ENSFCAG00000034898:GNAS",
@@ -40,10 +41,10 @@ run_dndscv <- function(cohort_file, target_genes, suffix) {
 
   mutations <- test |>
     filter(
-    !(Variant_Type %in% c("INS", "DEL")) |  
-      (VAF_tum >= 0.1 & Variant_Type %in% c("INS", "DEL")) # Filter out likely indel artefacts
-  ) |>
-  filter(`99_Lives` == "-") |>
+      !(Variant_Type %in% c("INS", "DEL")) |
+        (VAF_tum >= 0.1 & Variant_Type %in% c("INS", "DEL")) # Filter out likely indel artefacts
+    ) |>
+    filter(`99_Lives` == "-") |>
     select(Tumor_Sample_Barcode, Chromosome, POS_VCF, REF_VEP, ALT_VEP) |>
     rename(sampleID = Tumor_Sample_Barcode, chr = Chromosome, pos = POS_VCF, ref = REF_VEP, mut = ALT_VEP) |>
     mutate(chr = str_replace(chr, "chr", "")) |>
@@ -79,7 +80,7 @@ run_dndscv <- function(cohort_file, target_genes, suffix) {
 
 
 filtered_gene_list <- setdiff(gene_list, missing_genes)
-sig_genes_per_cohort <- imap_dfr(cohort_mafs, ~run_dndscv(.x, filtered_gene_list, .y), .id = "cohort")
+sig_genes_per_cohort <- imap_dfr(cohort_mafs, ~ run_dndscv(.x, filtered_gene_list, .y), .id = "cohort")
 
 
 sig_genes_per_cohort |>
@@ -95,5 +96,3 @@ knitr::kable(sig_genes_per_cohort |> tibble() |>
   select(cohort, gene_name, qglobal_cv, theta) |>
   arrange(qglobal_cv) |>
   print(n = 100))
-
-
