@@ -36,65 +36,96 @@ missing_genes <- c(
 )
 
 
-run_dndscv <- function(cohort_file, target_genes, suffix) {
-  test <- read_tsv(cohort_file)
-
-  mutations <- test |>
-    filter(
-      !(Variant_Type %in% c("INS", "DEL")) |
-        (VAF_tum >= 0.1 & Variant_Type %in% c("INS", "DEL")) # Filter out likely indel artefacts
-    ) |>
-    filter(`99_Lives` == "-") |>
-    select(Tumor_Sample_Barcode, Chromosome, POS_VCF, REF_VEP, ALT_VEP) |>
-    rename(sampleID = Tumor_Sample_Barcode, chr = Chromosome, pos = POS_VCF, ref = REF_VEP, mut = ALT_VEP) |>
-    mutate(chr = str_replace(chr, "chr", "")) |>
-    distinct()
-
-  dndsout <- dndscv(mutations,
-    gene_list = target_genes,
-    refdb = here("results/inputs/feline_transcript_104_canon_dset.rda"), 
-    max_muts_per_gene_per_sample = 2,
-    cv = NULL
-  )
-  dndsout
-
-  sel_cv <- dndsout$sel_cv
-  print("Sig. genes")
-  print(head(sel_cv, 20), digits = 3)
-  tibble(sel_cv) |>
-    select(gene_name, contains("q"))
-  write.table(sel_cv, file = paste0("results/dndscv/dndscv_genes_", suffix, ".tsv"), quote = F, sep = "\t", row.names = F)
+    # Going to produce a subdivided cohort of lymphomas
+    lymphoma_metadata <- read_xlsx("metadata/6982_Lymphoma_metadata.xlsx") |> 
+    select(`Sanger DNA ID`, `Type`) |> 
+    filter(!is.na(Type)) |> 
+    dplyr::rename("Tumor_Sample_Barcode" = "Sanger DNA ID")
 
 
-
-  print("Global dnds")
-  print(dndsout$globaldnds)
-
-  print("Annot muts")
-  head(dndsout$annotmuts)
-
-  print("Theta")
-  print(dndsout$nbreg$theta)
-
-  sel_out <- sel_cv |> mutate(theta = dndsout$nbreg$theta)
-  return(sel_out)
-}
+    cohort_dfs <- map(cohort_mafs, read_tsv)
 
 
-filtered_gene_list <- setdiff(gene_list, missing_genes)
-sig_genes_per_cohort <- imap_dfr(cohort_mafs, ~ run_dndscv(.x, filtered_gene_list, .y), .id = "cohort")
+    # Split
+    lymphoma_sub_cohorts <- cohort_dfs[["6982_3135"]] |> 
+    left_join(lymphoma_metadata, by = "Tumor_Sample_Barcode") |> 
+    filter(Type %in% c("T cell", "B cell")) |>
+    group_split(Type)
 
 
-sig_genes_per_cohort |>
-  tibble() |>
-  filter(qglobal_cv < 0.05) |>
-  group_by(cohort) |>
-  select(cohort, gene_name, qglobal_cv, theta) |>
-  group_split()
+    multi_marker_cells <- cohort_dfs[["6982_3135"]] |>
+    left_join(lymphoma_metadata, by = "Tumor_Sample_Barcode") |> 
+    filter(!Type %in% c("T cell", "B cell"))
 
 
-knitr::kable(sig_genes_per_cohort |> tibble() |>
-  filter(qglobal_cv < 0.05) |>
-  select(cohort, gene_name, qglobal_cv, theta) |>
-  arrange(qglobal_cv) |>
-  print(n = 100))
+    lymphoma_sub_cohorts
+
+    # Add the multi marker cells into both driver analyses
+    sub_cohorts_plus_multi <- map(lymphoma_sub_cohorts, ~bind_rows(.x, multi_marker_cells))
+
+    names(sub_cohorts_plus_multi) <- c("6982_3135_B", "6982_3135_T") 
+    sub_cohorts_plus_multi
+
+    augemented_cohorts <- append(cohort_dfs, sub_cohorts_plus_multi)
+
+    run_dndscv <- function(cohort, target_genes, suffix) {
+    
+    mutations <- cohort |>
+        filter(
+        !(Variant_Type %in% c("INS", "DEL")) |
+            (VAF_tum >= 0.1 & Variant_Type %in% c("INS", "DEL")) # Filter out likely indel artefacts
+        ) |>
+        filter(`99_Lives` == "-") |>
+        select(Tumor_Sample_Barcode, Chromosome, POS_VCF, REF_VEP, ALT_VEP) |>
+        rename(sampleID = Tumor_Sample_Barcode, chr = Chromosome, pos = POS_VCF, ref = REF_VEP, mut = ALT_VEP) |>
+        mutate(chr = str_replace(chr, "chr", "")) |>
+        distinct()
+
+    dndsout <- dndscv(mutations,
+        gene_list = target_genes,
+        refdb = here("results/inputs/feline_transcript_104_canon_dset.rda"), 
+        max_muts_per_gene_per_sample = 2,
+        cv = NULL
+    )
+    dndsout
+
+    sel_cv <- dndsout$sel_cv
+    print("Sig. genes")
+    print(head(sel_cv, 20), digits = 3)
+    tibble(sel_cv) |>
+        select(gene_name, contains("q"))
+    write.table(sel_cv, file = paste0("results/dndscv/dndscv_genes_", suffix, ".tsv"), quote = F, sep = "\t", row.names = F)
+
+
+
+    print("Global dnds")
+    print(dndsout$globaldnds)
+
+    print("Annot muts")
+    head(dndsout$annotmuts)
+
+    print("Theta")
+    print(dndsout$nbreg$theta)
+
+    sel_out <- sel_cv |> mutate(theta = dndsout$nbreg$theta)
+    return(sel_out)
+    }
+
+
+    filtered_gene_list <- setdiff(gene_list, missing_genes)
+    sig_genes_per_cohort <- imap_dfr(augemented_cohorts, ~ run_dndscv(.x, filtered_gene_list, .y), .id = "cohort")
+
+
+    sig_genes_per_cohort |>
+    tibble() |>
+    filter(qglobal_cv < 0.05) |>
+    group_by(cohort) |>
+    select(cohort, gene_name, qglobal_cv, theta) |>
+    group_split()
+
+
+    knitr::kable(sig_genes_per_cohort |> tibble() |>
+    filter(qglobal_cv < 0.05) |>
+    select(cohort, gene_name, qglobal_cv, theta) |>
+    arrange(qglobal_cv) |>
+    print(n = 100))
