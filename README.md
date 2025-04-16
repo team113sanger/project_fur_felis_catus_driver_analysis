@@ -42,6 +42,5 @@ The max genes per sample for dNdScv was set to 2 in order to reduce the contribu
 This analysis was conducted within a development container with docker and R (4.4.0) installed (`.devcontainer/devcontainer.json`). All scripts can therefore be run in a Github codespace or Vscode session with docker available. All R dependencies for this project are detailed within the project renv.lock file and can be installed by running `renv::restore()` in a R terminal.
 
 
-
 ## Contact 
 - jb63@sanger.ac.uk
