@@ -11,7 +11,7 @@ library(stringr)
 # List available datasets to find your species of interest
 
 
-path_genome_fasta <- "/lustre/scratch124/casm/team78pipelines/reference/Cat/Felis_catus_9.0/genome.fa"
+path_genome_fasta <- "felCat9/ncbi_dataset/data/GCF_000181335.3/GCF_000181335.3_Felis_catus_9.0_genomic.fna"
 
 prim_contigs <- c(
   "A1", "A2", "A3", "B1", "B2", "B3", "B4",
