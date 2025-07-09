@@ -91,20 +91,27 @@ filtered_gene_list <- setdiff(gene_list, missing_genes)
 
 
 all_genes <- read_tsv(here("metadata/felis_catus_104_biomart.txt"))
-filtered_gene_list
+observed_genes <- read_tsv("inputs/keep_vaf_size_filt_matched_7834_feline_mammary_wes.maf") |>
+                    filter(Hugo_Symbol != "-") |> 
+                    pull(Hugo_Symbol)
 
-whole_exome <- all_genes |> filter(!is.na(`Gene name`)) |>
-transmute(paste0(`Gene stable ID`, ":", `Gene name`))
+
+
+observed_exome <- all_genes |> 
+filter(`Gene name` %in% observed_genes) |>
+transmute(Gene =  paste0(`Gene stable ID`, ":", `Gene name`)) |> 
+distinct() |> 
+pull()
 
 
 sig_genes_per_cohort <- imap_dfr(cohort_mafs[1:13], ~ run_dndscv(.x, filtered_gene_list, .y, TRUE), .id = "cohort")
 
 
-sig_genes_wes <- imap_dfr(cohort_mafs[14], ~ run_dndscv(.x, all_genes, .y,FALSE), .id = "cohort")
+sig_genes_wes <- map_dfr(cohort_mafs[14], ~ run_dndscv(.x, observed_exome, "7834_3518", FALSE), .id = "cohort")
 
 
 
-sig_genes_per_cohort |>
+sig_genes_wes |>
   tibble() |>
   filter(qglobal_cv < 0.05) |>
   group_by(cohort) |>
