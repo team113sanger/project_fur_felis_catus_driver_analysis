@@ -19,7 +19,7 @@ prim_contigs <- c(
   "E2", "E3", "F1", "F2", "X"
 )
 
-all_genes <- read_tsv(here("metadata/felis_catus_104_ biomart.txt"))
+all_genes <- read_tsv(here("metadata/felis_catus_104_biomart.txt"))
 canonical_transcripts <- read_tsv(
   here("feline_104_canonical_transcripts.tsv"),
   col_names = c("Symbol", "Gene", "Transcript", "Transcript Stable ID")

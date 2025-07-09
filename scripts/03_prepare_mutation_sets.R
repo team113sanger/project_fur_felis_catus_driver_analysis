@@ -36,15 +36,20 @@ missing_genes <- c(
 )
 
 
-run_dndscv <- function(cohort_file, target_genes, suffix) {
+run_dndscv <- function(cohort_file, target_genes, suffix, tagged) {
   test <- read_tsv(cohort_file)
 
   mutations <- test |>
     filter(
       !(Variant_Type %in% c("INS", "DEL")) |
         (VAF_tum >= 0.1 & Variant_Type %in% c("INS", "DEL")) # Filter out likely indel artefacts
-    ) |>
-    filter(`99_Lives` == "-") |>
+    )
+    
+    if (tagged){
+    mutations <- mutations |> 
+    filter(`99_Lives` == "-")
+    }
+    mutations <- mutations |>
     select(Tumor_Sample_Barcode, Chromosome, POS_VCF, REF_VEP, ALT_VEP) |>
     rename(sampleID = Tumor_Sample_Barcode, chr = Chromosome, pos = POS_VCF, ref = REF_VEP, mut = ALT_VEP) |>
     mutate(chr = str_replace(chr, "chr", "")) |>
@@ -82,7 +87,21 @@ run_dndscv <- function(cohort_file, target_genes, suffix) {
 
 
 filtered_gene_list <- setdiff(gene_list, missing_genes)
-sig_genes_per_cohort <- imap_dfr(cohort_mafs, ~ run_dndscv(.x, filtered_gene_list, .y), .id = "cohort")
+
+
+
+all_genes <- read_tsv(here("metadata/felis_catus_104_biomart.txt"))
+filtered_gene_list
+
+whole_exome <- all_genes |> filter(!is.na(`Gene name`)) |>
+transmute(paste0(`Gene stable ID`, ":", `Gene name`))
+
+
+sig_genes_per_cohort <- imap_dfr(cohort_mafs[1:13], ~ run_dndscv(.x, filtered_gene_list, .y, TRUE), .id = "cohort")
+
+
+sig_genes_wes <- imap_dfr(cohort_mafs[14], ~ run_dndscv(.x, all_genes, .y,FALSE), .id = "cohort")
+
 
 
 sig_genes_per_cohort |>
