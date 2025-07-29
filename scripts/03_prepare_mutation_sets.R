@@ -18,7 +18,7 @@ library(logger)
 # Dndscv helper
 ################################################################################
 
-run_dndscv <- function(cohort_file,targeted = TRUE, target_genes, suffix, tagged) {
+run_dndscv <- function(cohort_file, targeted = TRUE, target_genes, suffix, tagged) {
   test <- read_tsv(cohort_file)
 
   mutations <- test |>
@@ -85,7 +85,6 @@ cohort_mafs <- fs::dir_ls("inputs",
 names(cohort_mafs) <- str_extract(cohort_mafs, pattern = "([0-9]+_[0-9]+)")
 
 
-
 ################################################################################
 # Prep targeted gene list
 ################################################################################
@@ -149,7 +148,10 @@ sig_genes_per_cohort |>
   filter(qglobal_cv < 0.05) |>
   group_by(cohort) |>
   select(cohort, gene_name, qglobal_cv, theta) |>
-  group_split()
+  group_split() |>
+  map(knitr::kable)
+
+
 
 knitr::kable(sig_genes_per_cohort |> tibble() |>
   filter(qglobal_cv < 0.05) |>
@@ -160,10 +162,12 @@ knitr::kable(sig_genes_per_cohort |> tibble() |>
 ################################################################################
 # Run dndsvc on WES cohorts
 ################################################################################
+names(cohort_mafs)[14] <- "7834_3518_organoids"
+names(cohort_mafs)[15] <- "7834_3518_tumours"
 
-sig_genes_wes <- map_dfr(cohort_mafs[14], 
+sig_genes_wes <- imap_dfr(cohort_mafs[14:15],
 ~ run_dndscv(.x, targeted = FALSE, 
-             observed_exome, "7834_3518", FALSE), 
+             observed_exome, suffix = .y , FALSE), 
              .id = "cohort")
 
 sig_genes_wes |>
