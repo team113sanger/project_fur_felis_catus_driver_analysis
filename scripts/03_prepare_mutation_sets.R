@@ -138,7 +138,7 @@ pull()
 # Run dndsvc on targeted cohorts
 ################################################################################
 
-sig_genes_per_cohort <- imap_dfr(cohort_mafs[1:13], 
+sig_genes_per_cohort <- imap_dfr(cohort_mafs[1:15], 
                         ~ run_dndscv(.x, targeted = TRUE, 
                                      filtered_gene_list, .y, TRUE), 
                                      .id = "cohort")
@@ -162,8 +162,8 @@ knitr::kable(sig_genes_per_cohort |> tibble() |>
 ################################################################################
 # Run dndsvc on WES cohorts
 ################################################################################
-names(cohort_mafs)[14] <- "7834_3518_organoids"
-names(cohort_mafs)[15] <- "7834_3518_tumours"
+names(cohort_mafs)[16] <- "7834_3518_organoids"
+names(cohort_mafs)[17] <- "7834_3518_tumours"
 
 sig_genes_wes <- imap_dfr(cohort_mafs[14:15],
 ~ run_dndscv(.x, targeted = FALSE, 
@@ -180,5 +180,5 @@ sig_genes_wes |>
 knitr::kable(sig_genes_wes |> tibble() |>
   filter(qglobal_cv < 0.05) |>
   select(cohort, gene_name, qglobal_cv, theta) |>
-  arrange(qglobal_cv) |>
+  arrange(cohort,qglobal_cv) |>
   print(n = 100))
