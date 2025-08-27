@@ -83,7 +83,11 @@ cohort_mafs <- fs::dir_ls("inputs",
   recurse = TRUE, regexp = "keep_vaf_size_filt_matched.*[0-9]+.*.maf$"
 )
 names(cohort_mafs) <- str_extract(cohort_mafs, pattern = "([0-9]+_[0-9]+)")
+names(cohort_mafs) <- c(names(cohort_mafs)[1:8],"6982_3135_b_cell", names(cohort_mafs)[10],"6982_3135_t_cell", names(cohort_mafs)[12:17])
 
+
+# names(cohort_mafs[9]) <- "6982_3135_b_cell"
+# names(cohort_mafs[11]) <- "6982_3135_t_cell"
 
 ################################################################################
 # Prep targeted gene list
